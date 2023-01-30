@@ -9,18 +9,14 @@ const error500 = (err, status) => {
 }
 
 exports.getPosts = (req, res, next) => {
-    res.status(200).json({
-        posts: [{
-            _id: '1',
-            title: 'first post',
-            content: 'This is the first post',
-            imageUrl: 'images/laptop.jpg',
-            creator: {
-                name: 'Gaurav'
-            },
-            createdAt: new Date()
-        }]
-    })
+    Post.find()
+        .then(posts => {
+            res.status(200).json({
+                posts: posts
+            })
+        })
+        .catch(err => next(error500(err, 500)))
+
 }
 
 exports.createPost = (req, res, next) => {
@@ -33,7 +29,7 @@ exports.createPost = (req, res, next) => {
     const post = new Post({
         title: title,
         content: content,
-        imageUrl: 'images/laptop.jpg',
+        imageUrl: 'laptop.jpg',
         creator: {
             name: 'Gaurav'
         }
@@ -48,3 +44,14 @@ exports.createPost = (req, res, next) => {
         })
         .catch(err => next(error500(err, 500)));
 }
+
+exports.getPost = (req, res, next) => {
+    const postId = req.params.postId;
+    Post.findById(postId).then(post => {
+        console.log(post);
+        if (!post) {
+            throw error500('No Such Post Found', 404);
+        }
+        res.status(200).json({ post: post })
+    }).catch(err => next(error500(err, 500)))
+} 
