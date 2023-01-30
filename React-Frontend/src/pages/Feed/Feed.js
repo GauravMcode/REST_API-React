@@ -113,23 +113,25 @@ class Feed extends Component {
       url = 'URL';
     }
 
-    fetch(url)
+    fetch(url, {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      method: method,
+      body: JSON.stringify({
+        title: postData.title,
+        content: postData.content
+      })
+    })
       .then(res => {
+        console.log(res);
         if (res.status !== 200 && res.status !== 201) {
           throw new Error('Creating or editing a post failed!');
         }
-        return res.json({
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          method: method,
-          body: JSON.stringify({
-            title: postData.title,
-            content: postData.content
-          })
-        });
+        return res.json();
       })
       .then(resData => {
+        console.log(resData);
         const post = {
           _id: resData.post._id,
           title: resData.post.title,
