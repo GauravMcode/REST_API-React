@@ -1,3 +1,5 @@
+const path = require('path');
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
@@ -7,6 +9,8 @@ const feedRoutes = require('./routes/feed');
 const app = express();
 
 const MONGODB_URI = 'mongodb+srv://gaurav:fireup@cluster0.cwp7tik.mongodb.net/messages?retryWrites=true&w=majority'
+
+app.use(express.static(path.join(__dirname, 'images')))
 
 // app.use(bodyParser.urlencoded()); // parses req with content-type: x-ww-form-urlencoded
 app.use(bodyParser.json());//parses req with content-type: application/json
@@ -20,6 +24,13 @@ app.use((req, res, next) => {
 })
 
 app.use('/feed', feedRoutes);
+
+app.use((error, req, res, next) => {
+    console.log(error);
+    const status = error.statusCode || 500;
+    const message = error.message;
+    res.status(status).json({ message: message })
+})
 
 mongoose.connect(MONGODB_URI)
     .then(result => app.listen(8080))

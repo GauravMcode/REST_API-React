@@ -2,6 +2,12 @@ const { validationResult } = require('express-validator/check');
 
 const Post = require('../models/post');
 
+const error500 = (err, status) => {
+    const error = new Error(err);
+    error.statusCode = error.statusCode || status;
+    return error;
+}
+
 exports.getPosts = (req, res, next) => {
     res.status(200).json({
         posts: [{
@@ -20,10 +26,7 @@ exports.getPosts = (req, res, next) => {
 exports.createPost = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        res.status(422).json({
-            message: 'Validation Failed. Incorrect input data',
-            errors: errors.array()
-        })
+        throw error500('Validation Failed. Incorrect input data', 422);
     }
     const title = req.body.title;
     const content = req.body.content;
@@ -43,5 +46,5 @@ exports.createPost = (req, res, next) => {
                 post: result
             })
         })
-        .catch(err => console.log(err));
+        .catch(err => next(error500(err, 500)));
 }
