@@ -26,10 +26,14 @@ exports.createPost = (req, res, next) => {
     }
     const title = req.body.title;
     const content = req.body.content;
+    if (!req.file) {
+        throw error500('No valid image found', 422);
+    }
+    const imageUrl = req.file.filename;
     const post = new Post({
         title: title,
         content: content,
-        imageUrl: 'laptop.jpg',
+        imageUrl: imageUrl,
         creator: {
             name: 'Gaurav'
         }
