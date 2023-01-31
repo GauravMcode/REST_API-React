@@ -33,7 +33,7 @@ exports.getPosts = (req, res, next) => {
 exports.createPost = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        throw error500('Validation Failed. Incorrect input data', 422);
+        throw error500(errors.array(), 422);
     }
     const title = req.body.title;
     const content = req.body.content;
