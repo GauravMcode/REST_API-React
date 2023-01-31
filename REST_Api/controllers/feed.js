@@ -14,55 +14,57 @@ const error500 = (err, status) => {
     return error;
 }
 
-exports.getStatus = (req, res, next) => {
-    User.findById(req.userId)
-        .then(user => {
-            res.status(200).json({ status: user.status })
-        })
-        .catch(err => next(error500(err, 500)))
+exports.getStatus = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.userId)
+        res.status(200).json({ status: user.status })
+    }
+    catch (err) {
+        next(error500(err, 500))
+    }
 }
 
-exports.updateStatus = (req, res, next) => {
+exports.updateStatus = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         throw error500(errors.array(), 422);
     }
     const status = req.body.status;
-    User.findById(req.userId)
-        .then(user => {
-            user.status = status;
-            return user.save();
+    try {
+        const user = await User.findById(req.userId);
+        user.status = status;
+        const result = await user.save();
+        res.status(200).json({
+            user: result
         })
-        .then(result => {
-            res.status(200).json({
-                user: result
-            })
-        })
-        .catch(err => next(error500(err, 500)))
+    } catch (err) {
+        next(error500(err, 500))
+    }
+
 }
 
-exports.getPosts = (req, res, next) => {
+exports.getPosts = async (req, res, next) => {
     const currentPage = req.query.page;
     posts_per_page = 2;
     let totalItems;
     const userId = mongoose.Types.ObjectId(req.userId)
     console.log(userId);
-    Post.find().countDocuments()
-        .then(count => {
-            totalItems = count;
-            return Post.find({ creator: userId }).skip((currentPage - 1) * posts_per_page).limit(posts_per_page).populate("creator", "name");
+    try {
+        const count = await Post.find().countDocuments();
+        totalItems = count;
+
+        const posts = await Post.find({ creator: userId }).skip((currentPage - 1) * posts_per_page).limit(posts_per_page).populate("creator", "name");
+        res.status(200).json({
+            posts: posts,
+            totalItems: totalItems
         })
-        .then(posts => {
-            res.status(200).json({
-                posts: posts,
-                totalItems: totalItems
-            })
-        })
-        .catch(err => next(error500(err, 500)))
+    } catch (err) {
+        next(error500(err, 500))
+    }
 
 }
 
-exports.createPost = (req, res, next) => {
+exports.createPost = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         throw error500(errors.array(), 422);
@@ -79,36 +81,36 @@ exports.createPost = (req, res, next) => {
         imageUrl: imageUrl,
         creator: req.userId
     })
-    post.save()
-        .then(result => {
-            return User.findById(req.userId)
+
+    try {
+        await post.save()
+        const user = await User.findById(req.userId)
+        user.posts.push(post._id);
+        const result = await user.save();
+        res.status(201).json({
+            message: "Post created successfully",
+            post: post,
+            creator: { _id: result._id, name: result.name }
         })
-        .then(user => {
-            user.posts.push(post._id);
-            return user.save();
-        })
-        .then(result => {
-            res.status(201).json({
-                message: "Post created successfully",
-                post: post,
-                creator: { _id: result._id, name: result.name }
-            })
-        })
-        .catch(err => next(error500(err, 500)));
+    } catch (err) {
+        next(error500(err, 500))
+    }
 }
 
-exports.getPost = (req, res, next) => {
+exports.getPost = async (req, res, next) => {
     const postId = req.params.postId;
-    Post.findById(postId).then(post => {
-        console.log(post);
+    const post = await Post.findById(postId)
+    try {
         if (!post) {
             throw error500('No Such Post Found', 404);
         }
         res.status(200).json({ post: post })
-    }).catch(err => next(error500(err, 500)))
+    } catch (err) {
+        next(error500(err, 500))
+    }
 }
 
-exports.updatePost = (req, res, next) => {
+exports.updatePost = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         throw error500('Validation Failed. Incorrect input data', 422);
@@ -124,54 +126,48 @@ exports.updatePost = (req, res, next) => {
     if (!imageUrl) {
         throw error500('Attach valid image file', 422);
     }
-    Post.findById(postId)
-        .then(post => {
-            console.log(post);
-            if (!post) {
-                throw error500('No such post found', 404);
-            }
-            if (post.creator.toString() !== req.userId) {  //check: if the post  is created by  the user
-                throw error500('Not Authorized', 403);
-            }
-            if (imageUrl !== post.imageUrl) {
-                console.log('1');
-                clearImage(post.imageUrl);
-            }
-            post.title = title;
-            post.content = content;
-            post.imageUrl = imageUrl;
-            return post.save();
-        })
-        .then(result => {
-            console.log(result);
-            res.status(200).json({ message: 'post updated succesfully', post: result })
-        })
-        .catch(err => next(error500(err, 500)))
+    const post = await Post.findById(postId)
+    try {
+        if (!post) {
+            throw error500('No such post found', 404);
+        }
+        if (post.creator.toString() !== req.userId) {  //check: if the post  is created by  the user
+            throw error500('Not Authorized', 403);
+        }
+        if (imageUrl !== post.imageUrl) {
+            console.log('1');
+            clearImage(post.imageUrl);
+        }
+        post.title = title;
+        post.content = content;
+        post.imageUrl = imageUrl;
+        const result = await post.save();
+        res.status(200).json({ message: 'post updated succesfully', post: result })
+    } catch (err) {
+        next(error500(err, 500))
+    }
 }
 
-exports.deletePost = (req, res, next) => {
+exports.deletePost = async (req, res, next) => {
     const postId = req.params.postId;
-    Post.findById(postId)
-        .then(post => {
-            if (!post) {
-                throw error500('No such post found', 404);
-            }
-            //check that  post is by user
-            if (post.creator.toString() !== req.userId) {
-                throw error500('Not Authorized', 403);
-            }
-            clearImage(post.imageUrl)
-            return post.delete();
-        })
-        .then(result => {
-            return User.findById(req.userId);
-        })
-        .then(user => {
-            user.posts.pull(postId);
-            return user.save();
-        })
-        .then(result => res.status(200).json({ message: 'deleted product successfully' }))
-        .catch(err => next(error500(err, 500)))
+    try {
+        const post = await Post.findById(postId)
+        if (!post) {
+            throw error500('No such post found', 404);
+        }
+        //check that  post is by user
+        if (post.creator.toString() !== req.userId) {
+            throw error500('Not Authorized', 403);
+        }
+        clearImage(post.imageUrl)
+        await post.delete();
+        const user = await User.findById(req.userId);
+        user.posts.pull(postId);
+        await user.save();
+        res.status(200).json({ message: 'deleted product successfully' })
+    } catch (err) {
+        next(error500(err, 500))
+    }
 }
 
 clearImage = imagePath => {
