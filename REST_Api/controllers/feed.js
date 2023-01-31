@@ -12,10 +12,18 @@ const error500 = (err, status) => {
 }
 
 exports.getPosts = (req, res, next) => {
-    Post.find()
+    const currentPage = req.query.page;
+    posts_per_page = 2;
+    let totalItems;
+    Post.find().countDocuments()
+        .then(count => {
+            totalItems = count;
+            return Post.find().skip((currentPage - 1) * posts_per_page).limit(posts_per_page)
+        })
         .then(posts => {
             res.status(200).json({
-                posts: posts
+                posts: posts,
+                totalItems: totalItems
             })
         })
         .catch(err => next(error500(err, 500)))
