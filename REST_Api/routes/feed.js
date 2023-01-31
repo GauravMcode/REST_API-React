@@ -6,6 +6,15 @@ const authController = require('../controllers/auth');
 
 const router = express.Router();
 
+//GET
+router.get('/status', authController.isAuth, feedController.getStatus)
+
+router.put('/status', authController.isAuth,
+    [
+        body('status').trim().not().isEmpty()
+    ],
+    feedController.updateStatus)
+
 //GET '/feed/posts'
 router.get('/posts', authController.isAuth, feedController.getPosts);
 

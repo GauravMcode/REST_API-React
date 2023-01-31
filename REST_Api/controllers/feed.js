@@ -14,6 +14,33 @@ const error500 = (err, status) => {
     return error;
 }
 
+exports.getStatus = (req, res, next) => {
+    User.findById(req.userId)
+        .then(user => {
+            res.status(200).json({ status: user.status })
+        })
+        .catch(err => next(error500(err, 500)))
+}
+
+exports.updateStatus = (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        throw error500(errors.array(), 422);
+    }
+    const status = req.body.status;
+    User.findById(req.userId)
+        .then(user => {
+            user.status = status;
+            return user.save();
+        })
+        .then(result => {
+            res.status(200).json({
+                user: result
+            })
+        })
+        .catch(err => next(error500(err, 500)))
+}
+
 exports.getPosts = (req, res, next) => {
     const currentPage = req.query.page;
     posts_per_page = 2;
