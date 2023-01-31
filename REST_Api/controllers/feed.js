@@ -2,8 +2,11 @@ const fs = require('fs');
 const path = require('path');
 
 const { validationResult } = require('express-validator/check');
+const mongoose = require('mongoose');
+
 
 const Post = require('../models/post');
+const User = require('../models/user');
 
 const error500 = (err, status) => {
     const error = new Error(err);
@@ -15,10 +18,12 @@ exports.getPosts = (req, res, next) => {
     const currentPage = req.query.page;
     posts_per_page = 2;
     let totalItems;
+    const userId = mongoose.Types.ObjectId(req.userId)
+    console.log(userId);
     Post.find().countDocuments()
         .then(count => {
             totalItems = count;
-            return Post.find().skip((currentPage - 1) * posts_per_page).limit(posts_per_page)
+            return Post.find({ creator: userId }).skip((currentPage - 1) * posts_per_page).limit(posts_per_page).populate("creator", "name");
         })
         .then(posts => {
             res.status(200).json({
@@ -45,16 +50,21 @@ exports.createPost = (req, res, next) => {
         title: title,
         content: content,
         imageUrl: imageUrl,
-        creator: {
-            name: 'Gaurav'
-        }
+        creator: req.userId
     })
     post.save()
         .then(result => {
-            console.log(result);
+            return User.findById(req.userId)
+        })
+        .then(user => {
+            user.posts.push(post._id);
+            return user.save();
+        })
+        .then(result => {
             res.status(201).json({
                 message: "Post created successfully",
-                post: result
+                post: post,
+                creator: { _id: result._id, name: result.name }
             })
         })
         .catch(err => next(error500(err, 500)));
@@ -93,6 +103,9 @@ exports.updatePost = (req, res, next) => {
             if (!post) {
                 throw error500('No such post found', 404);
             }
+            if (post.creator.toString() !== req.userId) {  //check: if the post  is created by  the user
+                throw error500('Not Authorized', 403);
+            }
             if (imageUrl !== post.imageUrl) {
                 console.log('1');
                 clearImage(post.imageUrl);
@@ -117,8 +130,18 @@ exports.deletePost = (req, res, next) => {
                 throw error500('No such post found', 404);
             }
             //check that  post is by user
+            if (post.creator.toString() !== req.userId) {
+                throw error500('Not Authorized', 403);
+            }
             clearImage(post.imageUrl)
             return post.delete();
+        })
+        .then(result => {
+            return User.findById(req.userId);
+        })
+        .then(user => {
+            user.posts.pull(postId);
+            return user.save();
         })
         .then(result => res.status(200).json({ message: 'deleted product successfully' }))
         .catch(err => next(error500(err, 500)))
