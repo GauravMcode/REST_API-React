@@ -53,7 +53,11 @@ exports.getPosts = async (req, res, next) => {
         const count = await Post.find().countDocuments();
         totalItems = count;
 
-        const posts = await Post.find({ creator: userId }).skip((currentPage - 1) * posts_per_page).limit(posts_per_page).populate("creator", "name");
+        const posts = await Post.find({ creator: userId })
+            .skip((currentPage - 1) * posts_per_page)
+            .limit(posts_per_page)
+            .sort({ createdAt: -1 })//reverse sort
+            .populate("creator");
         res.status(200).json({
             posts: posts,
             totalItems: totalItems
@@ -127,12 +131,12 @@ exports.updatePost = async (req, res, next) => {
     if (!imageUrl) {
         throw error500('Attach valid image file', 422);
     }
-    const post = await Post.findById(postId)
+    const post = await Post.findById(postId).populate('creator')
     try {
         if (!post) {
             throw error500('No such post found', 404);
         }
-        if (post.creator.toString() !== req.userId) {  //check: if the post  is created by  the user
+        if (post.creator._id.toString() !== req.userId) {  //check: if the post  is created by  the user
             throw error500('Not Authorized', 403);
         }
         if (imageUrl !== post.imageUrl) {
@@ -143,6 +147,7 @@ exports.updatePost = async (req, res, next) => {
         post.content = content;
         post.imageUrl = imageUrl;
         const result = await post.save();
+        io.getIO().emit('posts', { action: 'update', post: result })
         res.status(200).json({ message: 'post updated succesfully', post: result })
     } catch (err) {
         next(error500(err, 500))
@@ -165,6 +170,7 @@ exports.deletePost = async (req, res, next) => {
         const user = await User.findById(req.userId);
         user.posts.pull(postId);
         await user.save();
+        io.getIO().emit('posts', { action: 'delete', postId: postId });
         res.status(200).json({ message: 'deleted product successfully' })
     } catch (err) {
         next(error500(err, 500))
