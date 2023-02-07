@@ -4,7 +4,7 @@
   "description": "in this project, we build a rest api with express",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha",
     "start": "nodemon app.js"
   },
   "keywords": [
@@ -15,7 +15,10 @@
   "author": "Gaurav Mishra",
   "license": "ISC",
   "devDependencies": {
-    "nodemon": "^2.0.20"
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
+    "nodemon": "^2.0.20",
+    "sinon": "^15.0.1"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

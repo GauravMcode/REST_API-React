@@ -63,7 +63,6 @@ exports.isAuth = (req, res, next) => {
     if (!authHeader) {      //if req header doesn't contains jwt token
         throw error500('Not Authenticated', 401);
     }
-    console.log(typeof authHeader);
     const token = authHeader.split(' ')[1];  //extracting token from header
     let decodedToken;
     try {
