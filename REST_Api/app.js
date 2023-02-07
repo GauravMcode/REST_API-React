@@ -55,6 +55,7 @@ app.use((error, req, res, next) => {
     res.status(status).json({ data: data })
 })
 
+mongoose.set("strictQuery", false); //as per depreciation warning
 mongoose.connect(MONGODB_URI)
     .then(result => {
         const server = app.listen(8080);
@@ -64,3 +65,4 @@ mongoose.connect(MONGODB_URI)
         })
     })
     .catch(err => console.log(err))
+

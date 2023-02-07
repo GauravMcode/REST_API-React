@@ -6,6 +6,8 @@ const authController = require('../controllers/auth');
 const User = require('../models/user');
 
 /*  UNIT TESTS*/
+
+/* isAuth Test */
 describe('is-Auth test', function () {
     it('should throw error if req header does not contain jwt token', function () {
         const req = {
@@ -39,6 +41,7 @@ describe('is-Auth test', function () {
     })
 })
 
+/* Log-in Test */
 describe('Log-in test', function () {
 
     /* testing log-in by stubbing User.findOne() and using done() for async function*/
@@ -56,13 +59,11 @@ describe('Log-in test', function () {
             console.log(result.statusCode);
             expect(result).to.be.an('error');
             expect(result).to.have.property('statusCode', 500);
-            done();
+            done(); //to make mocha know that this function chain has to be executed asyncronously
         })
 
         User.findOne.restore();
     })
 })
 
-describe('getUserStatus Test', function () {
-    it('')
-})
+

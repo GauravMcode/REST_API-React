@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const { validationResult } = require('express-validator/check');
+const { validationResult } = require('express-validator');
 const mongoose = require('mongoose');
 
 const io = require('../socket');
@@ -18,9 +18,11 @@ exports.getStatus = async (req, res, next) => {
     try {
         const user = await User.findById(req.userId)
         res.status(200).json({ status: user.status })
+        return;
     }
     catch (err) {
         next(error500(err, 500))
+        return error500(err, 500);
     }
 }
 
