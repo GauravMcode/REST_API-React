@@ -53,8 +53,10 @@ exports.login = async (req, res, next) => {
             'somesupersecretstring',
             { expiresIn: '1h' });
         res.status(200).json({ token: token, userId: fetchedUser._id.toString() })
+        return;
     } catch (err) {
-        next(error500(err, 500))
+        next(error500(err, 500));
+        return error500(err, 500);
     }
 }
 

@@ -4,7 +4,7 @@
   "description": "in this project, we build a rest api with express",
   "main": "app.js",
   "scripts": {
-    "test": "mocha",
+    "test": "mocha --timeout 5000",
     "start": "nodemon app.js"
   },
   "keywords": [

@@ -2,7 +2,8 @@ const jwt = require('jsonwebtoken')
 const expect = require('chai').expect;
 const sinon = require('sinon');
 
-const authController = require('../controllers/auth')
+const authController = require('../controllers/auth');
+const User = require('../models/user');
 
 /*  UNIT TESTS*/
 describe('is-Auth test', function () {
@@ -38,3 +39,30 @@ describe('is-Auth test', function () {
     })
 })
 
+describe('Log-in test', function () {
+
+    /* testing log-in by stubbing User.findOne() and using done() for async function*/
+    it('should throw an error if accessing database fails', function (done) {
+        sinon.stub(User, 'findOne');
+        User.findOne.throws();
+
+        const req = {
+            body: {
+                email: 'hello@hello.com',
+                password: 'hello'
+            }
+        }
+        authController.login(req, {}, () => { }).then(result => {
+            console.log(result.statusCode);
+            expect(result).to.be.an('error');
+            expect(result).to.have.property('statusCode', 500);
+            done();
+        })
+
+        User.findOne.restore();
+    })
+})
+
+describe('getUserStatus Test', function () {
+    it('')
+})
