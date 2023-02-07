@@ -99,8 +99,10 @@ exports.createPost = async (req, res, next) => {
             post: { ...post._doc, creator: { _id: req.userId, name: user.name } },
             creator: { _id: result._id, name: result.name }
         })
+        return result;
     } catch (err) {
-        next(error500(err, 500))
+        next(error500(err, 500));
+        return (error500(err, 500));
     }
 }
 

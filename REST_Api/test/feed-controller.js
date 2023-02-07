@@ -1,5 +1,7 @@
 const { expect } = require('chai');
 const mongoose = require('mongoose');
+const sinon = require('sinon');
+const io = require('../socket');
 
 const feedController = require('../controllers/feed');
 const User = require('../models/user');
@@ -45,9 +47,39 @@ describe('Feed Controller Tests:', function () {
             }
             feedController.getStatus(req, res, () => { }).then((result) => {
                 expect(res.statusCode).to.be.equal(200);  //checks status  code
-                expect(res.userStatus).to.be.equal; ('I am new!'); // checks status
+                expect(res.userStatus).to.be.equal('I am new!'); // checks status
                 done();
             })
+        })
+    })
+
+    describe('createPost Test', function () {
+        it('should add post to posts of the creator', function (done) {
+            const req = {
+                userId: '5c0f66b979af55031b34728a',
+                body: {
+                    title: 'Testing fn',
+                    content: 'Just for testing'
+                },
+                file: {
+                    filename: '212312-Test.png'
+                }
+            }
+            const res = { status: function () { return this }, json: function () { } }
+
+            //stubbing socket io fn
+            const stub = sinon.stub(io, 'getIO').callsFake(() => {
+                return {
+                    emit: function () { }
+                }
+            });
+
+            feedController.createPost(req, res, () => { }).then(result => {
+                expect(result).to.have.property('posts');
+                expect(result.posts).to.have.length(1);
+                stub.restore();
+                done();
+            }).catch(done)
         })
     })
 
