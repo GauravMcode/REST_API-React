@@ -1,7 +1,5 @@
 # Ignore node_modules folder
 node_modules
-test
 
 #Ignore nodemon.json
 /nodemon.json
-/app.js
