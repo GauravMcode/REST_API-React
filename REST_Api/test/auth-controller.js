@@ -56,7 +56,6 @@ describe('Log-in test', function () {
             }
         }
         authController.login(req, {}, () => { }).then(result => {
-            console.log(result.statusCode);
             expect(result).to.be.an('error');
             expect(result).to.have.property('statusCode', 500);
             done(); //to make mocha know that this function chain has to be executed asyncronously
